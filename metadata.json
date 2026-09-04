@@ -1,0 +1,6 @@
+{
+  "name": "CampusFind",
+  "description": "University lost and found web app for reporting, browsing, and matching campus items.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
