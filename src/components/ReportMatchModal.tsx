@@ -24,9 +24,22 @@ export const ReportMatchModal: React.FC<ReportMatchModalProps> = ({
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
+    if (!isOpen) {
+      setSelectedId('');
+      setNotes('');
+      setSubmitted(false);
+      return;
+    }
+
+    const nextSelection = candidateReport ? candidateReport.id : '';
+    setSelectedId(nextSelection);
+    setNotes('');
+    setSubmitted(false);
+  }, [candidateReport, isOpen]);
+
+  useEffect(() => {
     if (!isOpen) return;
 
-    setSelectedId(candidateReport ? candidateReport.id : '');
     previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
 
     const preferredFocusable = dialogRef.current?.querySelector<HTMLElement>(
@@ -86,11 +99,12 @@ export const ReportMatchModal: React.FC<ReportMatchModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedId) return;
+    const nextCandidateId = candidateReport?.id ?? '';
+    if (!nextCandidateId || selectedId !== nextCandidateId) return;
 
     // Update both items to 'possible_match'
     updateReportStatus(currentReport.id, 'possible_match');
-    updateReportStatus(selectedId, 'possible_match');
+    updateReportStatus(nextCandidateId, 'possible_match');
     setSubmitted(true);
   };
 
