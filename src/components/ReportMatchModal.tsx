@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Sparkles, CheckCircle, AlertTriangle } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { X, Sparkles, CheckCircle } from 'lucide-react';
 import { Report } from '../types';
 import { useReports } from '../context/ReportContext';
 
@@ -17,9 +17,67 @@ export const ReportMatchModal: React.FC<ReportMatchModalProps> = ({
   candidateReport
 }) => {
   const { reports, updateReportStatus } = useReports();
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const [selectedId, setSelectedId] = useState<string>(candidateReport ? candidateReport.id : '');
   const [notes, setNotes] = useState('');
   const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    setSelectedId(candidateReport ? candidateReport.id : '');
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+
+    const preferredFocusable = dialogRef.current?.querySelector<HTMLElement>(
+      'input:not([disabled]), textarea:not([disabled]), select:not([disabled])'
+    );
+    const firstFocusable =
+      preferredFocusable ??
+      dialogRef.current?.querySelector<HTMLElement>(
+        'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
+      );
+    firstFocusable?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+
+      if (event.key !== 'Tab' || !dialogRef.current) return;
+
+      const focusableElements = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      );
+
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        return;
+      }
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      previouslyFocusedRef.current?.focus();
+    };
+  }, [candidateReport, isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -43,8 +101,13 @@ export const ReportMatchModal: React.FC<ReportMatchModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
-      <div 
+      <div
+        ref={dialogRef}
         id="report-match-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="report-match-title"
+        aria-describedby="report-match-description"
         className="bg-white/80 backdrop-blur-xl w-full max-w-md rounded-3xl shadow-2xl border border-white/60 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150"
       >
         <div className="px-6 py-4 border-b border-white/40 bg-white/40 flex items-center justify-between">
@@ -52,12 +115,13 @@ export const ReportMatchModal: React.FC<ReportMatchModalProps> = ({
             <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shadow-2xs">
               <Sparkles className="w-4 h-4" />
             </div>
-            <h3 className="font-bold text-indigo-950 text-base">Report Possible Match</h3>
+            <h3 id="report-match-title" className="font-bold text-indigo-950 text-base">Report Possible Match</h3>
           </div>
           <button
             id="close-match-modal-btn"
             type="button"
             onClick={onClose}
+            aria-label="Close match modal"
             className="p-2 rounded-xl text-slate-400 hover:text-indigo-950 hover:bg-white/60 transition-colors"
           >
             <X className="w-5 h-5" />
@@ -86,12 +150,12 @@ export const ReportMatchModal: React.FC<ReportMatchModalProps> = ({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <p id="report-match-description" className="text-xs text-slate-600 leading-relaxed">
               Found a listing that matches <strong>{currentReport.title}</strong>? Linking them flags both entries so both parties can coordinate return verification.
             </p>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label htmlFor="select-matching-report" className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Select Opposite Report ({currentReport.type === 'lost' ? 'Found' : 'Lost'} items)
               </label>
               <select
@@ -111,7 +175,7 @@ export const ReportMatchModal: React.FC<ReportMatchModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label htmlFor="match-notes-input" className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Notes for Reporters (Optional)
               </label>
               <textarea
