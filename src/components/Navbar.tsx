@@ -9,14 +9,17 @@ import {
   Compass, 
   FileText, 
   Shield, 
-  Layers
+  Layers,
+  LogOut
 } from 'lucide-react';
 import { useReports } from '../context/ReportContext';
+import { useAuth } from '../context/AuthContext';
 
 export const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const { myReportIds } = useReports();
+  const { isAdmin, logout } = useAuth();
 
   const isActive = (path: string) => {
     if (path === '/' && location.pathname === '/') return true;
@@ -28,7 +31,7 @@ export const Navbar: React.FC = () => {
     { name: 'Home', path: '/' },
     { name: 'Browse Items', path: '/browse' },
     { name: 'My Reports', path: '/my-reports', badge: myReportIds.length },
-    { name: 'Admin', path: '/admin' }
+    ...(isAdmin() ? [{ name: 'Admin', path: '/admin' }] : [])
   ];
 
   return (
@@ -94,6 +97,28 @@ export const Navbar: React.FC = () => {
               <PlusCircle className="w-4 h-4" />
               Report Item
             </Link>
+            {isAdmin() ? (
+              <button
+                onClick={() => {
+                  logout();
+                  window.location.href = '/';
+                }}
+                id="nav-logout-btn"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold text-slate-700 bg-white/70 hover:bg-white border border-white/60 shadow-xs transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </button>
+            ) : (
+              <Link
+                to="/admin-login"
+                id="nav-admin-login-btn"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold text-indigo-700 bg-indigo-100/80 hover:bg-indigo-200/80 border border-indigo-200/60 shadow-xs transition-colors"
+              >
+                <Shield className="w-4 h-4 text-indigo-600" />
+                Admin
+              </Link>
+            )}
           </div>
 
           {/* Mobile menu button */}
