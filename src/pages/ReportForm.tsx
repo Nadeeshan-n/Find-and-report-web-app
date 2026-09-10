@@ -14,7 +14,7 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 import { useReports } from '../context/ReportContext';
-import { LOCATIONS, CATEGORIES, findMatchesForReport } from '../mockData';
+import { LOCATIONS, CATEGORIES, findMatchesForReport, MATCH_SCORE_THRESHOLD } from '../mockData';
 import { ItemCategory, ItemType, Report, Match } from '../types';
 import { MatchCard } from '../components/MatchCard';
 import { isItemType, normalizeItemType } from '../utils/reportType';
@@ -86,8 +86,8 @@ export const ReportForm: React.FC = () => {
       imageUrl: imageUrl.trim() || undefined
     });
 
-    // Run AI matching immediately on all current reports
-    const matches = findMatchesForReport(newReport, reports).filter(m => m.score >= 50);
+    // Run rule-based matching immediately on all current reports
+    const matches = findMatchesForReport(newReport, reports).filter(m => m.score >= MATCH_SCORE_THRESHOLD);
 
     setCreatedReport(newReport);
     setInstantMatches(matches);
@@ -124,7 +124,7 @@ export const ReportForm: React.FC = () => {
         </h1>
         <p className="text-sm text-slate-500 mt-1">
           {itemType === 'lost'
-            ? 'Submit missing student property to trigger instant AI similarity matching with turned-in items.'
+            ? 'Submit missing student property to trigger instant similarity matching with turned-in items.'
             : 'Catalog an item discovered on campus so its rightful owner can claim it safely.'}
         </p>
       </div>
@@ -188,10 +188,10 @@ export const ReportForm: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-indigo-950">
-                    Instant AI Match Suggestions ({instantMatches.length})
+                    Instant Match Suggestions ({instantMatches.length})
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Calculated automatically against cataloged opposite listings (threshold ≥ 50%)
+                    Calculated automatically against cataloged opposite listings (threshold ≥ {MATCH_SCORE_THRESHOLD}%)
                   </p>
                 </div>
               </div>
@@ -210,7 +210,7 @@ export const ReportForm: React.FC = () => {
             ) : (
               <div className="bg-white/50 backdrop-blur-lg rounded-3xl border border-white/40 p-6 text-center space-y-2 shadow-sm">
                 <p className="text-xs text-slate-500">
-                  No immediate items matched above the 50% similarity threshold. As new reports are submitted by campus desks, matching notifications will show on your report details page.
+                  No immediate items matched above the {MATCH_SCORE_THRESHOLD}% similarity threshold. As new reports are submitted by campus desks, matching notifications will show on your report details page.
                 </p>
               </div>
             )}

@@ -17,7 +17,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { useReports } from '../context/ReportContext';
-import { findMatchesForReport } from '../mockData';
+import { findMatchesForReport, MATCH_SCORE_THRESHOLD } from '../mockData';
 import { MatchCard } from '../components/MatchCard';
 import { ContactModal } from '../components/ContactModal';
 import { ReportMatchModal } from '../components/ReportMatchModal';
@@ -35,11 +35,10 @@ export const ItemDetails: React.FC = () => {
 
   const report = getReportById(id || '');
 
-  // Calculate matches dynamically using the mock AI matching engine
+  // Calculate matches dynamically using the deterministic rule-based matching engine
   const matches = useMemo(() => {
     if (!report) return [];
-    // Only show matches above 50% as specified in brief
-    return findMatchesForReport(report, reports).filter(m => m.score >= 50);
+    return findMatchesForReport(report, reports).filter(m => m.score >= MATCH_SCORE_THRESHOLD);
   }, [report, reports]);
 
   if (!report) {
@@ -283,16 +282,16 @@ export const ItemDetails: React.FC = () => {
             </div>
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-indigo-950">
-                Potential AI Matches ({matches.length})
+                Potential Matches ({matches.length})
               </h2>
               <p className="text-xs text-slate-500">
-                Automated similarity detection for opposite reports (Category: +40, Location: +25, Keywords: +25, Date: +10)
+                Rule-based similarity detection for opposite reports using item-specific signals and a single {MATCH_SCORE_THRESHOLD}% threshold.
               </p>
             </div>
           </div>
 
           <span className="text-xs font-semibold px-3 py-1 rounded-full bg-white/70 text-indigo-700 border border-white/60 backdrop-blur-xs shadow-2xs">
-            Threshold: ≥ 50%
+            Threshold: ≥ {MATCH_SCORE_THRESHOLD}%
           </span>
         </div>
 
@@ -317,7 +316,7 @@ export const ItemDetails: React.FC = () => {
             </div>
             <h4 className="text-sm font-bold text-indigo-950">No High-Confidence Matches Yet</h4>
             <p className="text-xs text-slate-500 max-w-md mx-auto">
-              No opposite {isLost ? 'found' : 'lost'} listings currently meet the 50% match criteria. The system continually evaluates incoming reports against this listing.
+              No opposite {isLost ? 'found' : 'lost'} listings currently meet the {MATCH_SCORE_THRESHOLD}% match criteria. The system continually evaluates incoming reports against this listing.
             </p>
           </div>
         )}
