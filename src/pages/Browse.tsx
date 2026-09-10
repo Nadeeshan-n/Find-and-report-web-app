@@ -5,6 +5,7 @@ import { useReports } from '../context/ReportContext';
 import { LOCATIONS, CATEGORIES } from '../mockData';
 import { ItemCard } from '../components/ItemCard';
 import { ItemCategory, ItemType, ReportStatus } from '../types';
+import { normalizeItemTypeFilter } from '../utils/reportType';
 
 export const Browse: React.FC = () => {
   const { reports } = useReports();
@@ -13,7 +14,7 @@ export const Browse: React.FC = () => {
   // URL param defaults
   const queryParam = searchParams.get('q') || '';
   const categoryParam = searchParams.get('category') || '';
-  const typeParam = (searchParams.get('type') as ItemType | 'all') || 'all';
+  const typeParam = normalizeItemTypeFilter(searchParams.get('type'), 'all');
 
   const [searchQuery, setSearchQuery] = useState(queryParam);
   const [selectedType, setSelectedType] = useState<ItemType | 'all'>(typeParam);
@@ -26,8 +27,8 @@ export const Browse: React.FC = () => {
   useEffect(() => {
     if (queryParam) setSearchQuery(queryParam);
     if (categoryParam) setSelectedCategory(categoryParam);
-    if (typeParam) setSelectedType(typeParam);
-  }, [queryParam, categoryParam, typeParam]);
+    setSelectedType(normalizeItemTypeFilter(searchParams.get('type'), 'all'));
+  }, [queryParam, categoryParam, searchParams]);
 
   const filteredReports = useMemo(() => {
     return reports
