@@ -220,55 +220,57 @@ export const INITIAL_REPORTS: Report[] = [
   }
 ];
 
+export const MATCH_SCORE_THRESHOLD = 60;
+
+const INACTIVE_REPORT_STATUSES = new Set(['returned', 'closed']);
+const GENERIC_MATCH_TOKENS = new Set([
+  'about', 'after', 'again', 'around', 'been', 'before', 'black', 'blue', 'by', 'case', 'campus', 'carrel', 'carrels',
+  'chair', 'charging', 'common', 'covered', 'date', 'desk', 'found', 'from', 'galaxy', 'green', 'grey', 'hall', 'has',
+  'have', 'inside', 'it', 'left', 'level', 'library', 'light', 'lost', 'main', 'near', 'notes', 'of', 'on', 'one',
+  'outside', 'quiet', 'red', 'right', 'room', 'rooms', 'row', 'silver', 'south', 'study', 'table', 'that', 'the', 'their',
+  'there', 'this', 'time', 'with', 'white', 'while', 'yellow'
+]);
+
 /**
- * AI Matching Engine (Deterministic, weighted overlap according to prompt specification):
- * - category match -> +40
- * - same location -> +25
- * - >=2 shared keywords in title/description -> +25
- * - date within 3 days -> +10
- * Capped at 95 (never claim 100% certainty)
+ * Rule-based matching engine: evidence is weighted to favor item-specific overlap,
+ * while category/date-only similarity stays below the active match threshold.
  */
 export function calculateMatchScore(target: Report, candidate: Report): { score: number; reasons: string[] } {
-  // Only match opposite types (lost <-> found)
   if (target.type === candidate.type) {
+    return { score: 0, reasons: [] };
+  }
+
+  if (INACTIVE_REPORT_STATUSES.has(target.status) || INACTIVE_REPORT_STATUSES.has(candidate.status)) {
     return { score: 0, reasons: [] };
   }
 
   let score = 0;
   const reasons: string[] = [];
 
-  // 1. Category match (+40)
+  const sameLocation = target.location.toLowerCase().trim() === candidate.location.toLowerCase().trim();
+  const targetBuilding = target.location.split('(')[0].trim().toLowerCase();
+  const candidateBuilding = candidate.location.split('(')[0].trim().toLowerCase();
+  const sameBuilding = !!targetBuilding && !!candidateBuilding && targetBuilding === candidateBuilding;
+
   if (target.category === candidate.category) {
-    score += 40;
-    reasons.push(`Category match: ${target.category} (+40%)`);
+    score += 20;
+    reasons.push(`Category match: ${target.category} (+20%)`);
   }
 
-  // 2. Same location (+25)
-  if (target.location.toLowerCase().trim() === candidate.location.toLowerCase().trim()) {
+  if (sameLocation) {
     score += 25;
     reasons.push(`Identical campus location: ${target.location} (+25%)`);
-  } else {
-    // Partial location similarity bonus check if both contain "library", "gym", "hall", etc.
-    const targetBuilding = target.location.split('(')[0].trim().toLowerCase();
-    const candidateBuilding = candidate.location.split('(')[0].trim().toLowerCase();
-    if (targetBuilding && candidateBuilding && targetBuilding === candidateBuilding) {
-      score += 15;
-      reasons.push(`Nearby building match: ${targetBuilding} (+15%)`);
-    }
+  } else if (sameBuilding) {
+    score += 10;
+    reasons.push(`Nearby building match: ${targetBuilding} (+10%)`);
   }
-
-  // 3. Shared keywords in title/description (+25 for >=2 shared keywords)
-  const stopWords = new Set([
-    "the", "a", "an", "and", "or", "in", "on", "at", "by", "with", "for", "to", "of",
-    "is", "it", "my", "was", "left", "found", "lost", "near", "from", "has", "have", "this", "that"
-  ]);
 
   const extractTokens = (text: string): string[] => {
     return text
       .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, " ")
+      .replace(/[^a-z0-9\s]/g, ' ')
       .split(/\s+/)
-      .filter(w => w.length > 2 && !stopWords.has(w));
+      .filter((word) => word.length > 2 && !GENERIC_MATCH_TOKENS.has(word));
   };
 
   const targetTokens = new Set([
@@ -285,29 +287,35 @@ export function calculateMatchScore(target: Report, candidate: Report): { score:
     ...(candidate.color ? extractTokens(candidate.color) : [])
   ];
 
-  const matchedKeywords = Array.from(new Set(candidateTokens.filter(t => targetTokens.has(t))));
+  const matchedKeywords = Array.from(new Set(candidateTokens.filter((token) => targetTokens.has(token))));
   if (matchedKeywords.length >= 2) {
-    score += 25;
-    reasons.push(`Shared keywords (${matchedKeywords.slice(0, 3).join(", ")}): (+25%)`);
+    score += 35;
+    reasons.push(`Shared critical terms (${matchedKeywords.slice(0, 3).join(', ')}): (+35%)`);
   } else if (matchedKeywords.length === 1) {
-    score += 10;
-    reasons.push(`Keyword overlap (${matchedKeywords[0]}): (+10%)`);
+    score += 15;
+    reasons.push(`One meaningful shared term (${matchedKeywords[0]}): (+15%)`);
   }
 
-  // 4. Date within 3 days (+10)
+  const itemSpecificEvidence = sameLocation || sameBuilding || matchedKeywords.length > 0;
+
   try {
     const tDate = new Date(target.date).getTime();
     const cDate = new Date(candidate.date).getTime();
     const diffDays = Math.abs(tDate - cDate) / (1000 * 60 * 60 * 24);
     if (!isNaN(diffDays) && diffDays <= 3) {
-      score += 10;
-      reasons.push(`Reported within 3 days window (+10%)`);
+      if (itemSpecificEvidence) {
+        score += 10;
+        reasons.push('Reported within 3 days window (+10%)');
+      }
     }
   } catch {
     // Ignore date parse issues
   }
 
-  // Cap at 95 (never claim 100% certainty)
+  if (target.category === candidate.category && !itemSpecificEvidence) {
+    score = Math.min(score, 20);
+  }
+
   const finalScore = Math.min(95, score);
   return { score: finalScore, reasons };
 }
@@ -317,24 +325,24 @@ export function findMatchesForReport(target: Report, allReports: Report[]): Matc
 
   for (const candidate of allReports) {
     if (candidate.id === target.id) continue;
-    if (candidate.type === target.type) continue; // Must be lost vs found
-    
+    if (candidate.type === target.type) continue;
+    if (INACTIVE_REPORT_STATUSES.has(candidate.status)) continue;
+
     const { score, reasons } = calculateMatchScore(target, candidate);
-    if (score >= 40) { // Keep top candidates above threshold (brief states >= 50% shown)
-      const lostId = target.type === "lost" ? target.id : candidate.id;
-      const foundId = target.type === "found" ? target.id : candidate.id;
+    if (score >= MATCH_SCORE_THRESHOLD) {
+      const lostId = target.type === 'lost' ? target.id : candidate.id;
+      const foundId = target.type === 'found' ? target.id : candidate.id;
 
       matches.push({
         id: `match-${lostId}-${foundId}`,
         lostReportId: lostId,
         foundReportId: foundId,
         score,
-        reason: reasons.length > 0 ? reasons.join(" • ") : "Attribute overlap",
+        reason: reasons.length > 0 ? reasons.join(' • ') : 'Attribute overlap',
         matchedReport: candidate
       });
     }
   }
 
-  // Sort descending by score, take top 3
   return matches.sort((a, b) => b.score - a.score).slice(0, 3);
 }

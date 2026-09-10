@@ -1,25 +1,26 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
+import { describe, expect, it } from 'vitest';
 import { isItemType, normalizeItemType, normalizeItemTypeFilter } from './reportType';
 
-test('accepts valid item types', () => {
-  assert.equal(isItemType('lost'), true);
-  assert.equal(isItemType('found'), true);
-  assert.equal(normalizeItemType('lost', 'found'), 'lost');
-  assert.equal(normalizeItemType('found', 'lost'), 'found');
-});
+describe('report type normalization', () => {
+  it('accepts valid item types', () => {
+    expect(isItemType('lost')).toBe(true);
+    expect(isItemType('found')).toBe(true);
+    expect(normalizeItemType('lost', 'found')).toBe('lost');
+    expect(normalizeItemType('found', 'lost')).toBe('found');
+  });
 
-test('rejects invalid runtime values', () => {
-  assert.equal(isItemType('banana'), false);
-  assert.equal(isItemType(''), false);
-  assert.equal(normalizeItemType('banana', 'lost'), 'lost');
-  assert.equal(normalizeItemType('', 'found'), 'found');
-  assert.equal(normalizeItemTypeFilter('banana', 'all'), 'all');
-  assert.equal(normalizeItemTypeFilter('', 'all'), 'all');
-});
+  it('rejects invalid runtime values', () => {
+    expect(isItemType('banana')).toBe(false);
+    expect(isItemType('')).toBe(false);
+    expect(normalizeItemType('banana', 'lost')).toBe('lost');
+    expect(normalizeItemType('', 'found')).toBe('found');
+    expect(normalizeItemTypeFilter('banana', 'all')).toBe('all');
+    expect(normalizeItemTypeFilter('', 'all')).toBe('all');
+  });
 
-test('keeps valid filter values intact', () => {
-  assert.equal(normalizeItemTypeFilter('lost', 'all'), 'lost');
-  assert.equal(normalizeItemTypeFilter('found', 'all'), 'found');
-  assert.equal(normalizeItemTypeFilter('LOST', 'all'), 'lost');
+  it('keeps valid filter values intact', () => {
+    expect(normalizeItemTypeFilter('lost', 'all')).toBe('lost');
+    expect(normalizeItemTypeFilter('found', 'all')).toBe('found');
+    expect(normalizeItemTypeFilter('LOST', 'all')).toBe('lost');
+  });
 });
