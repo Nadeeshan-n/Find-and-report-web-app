@@ -61,10 +61,19 @@ npm run dev
 
 The app runs at `http://localhost:3000`.
 
+### Run the automated tests
+
+```bash
+npm run test
+```
+
+This runs the project’s Vitest suite in jsdom mode, which is appropriate for React + Vite apps that need browser-like DOM checks without changing the app architecture.
+
 ### Other scripts
 
 | Command | Description |
 |---|---|
+| `npm run test` | Run the automated tests |
 | `npm run build` | Type-check and build for production |
 | `npm run preview` | Preview the production build locally |
 | `npm run lint` | Type-check with `tsc --noEmit` |
