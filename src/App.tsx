@@ -1,3 +1,4 @@
+// @ts-ignore: Ignore missing type declarations for 'react' in this environment
 import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { ReportProvider } from './context/ReportContext';
