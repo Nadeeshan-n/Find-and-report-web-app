@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { Report, ReportStatus, Message } from '../types';
 import { INITIAL_REPORTS } from '../mockData';
+import { useAuth } from './AuthContext';
 
 interface ReportContextType {
   reports: Report[];
@@ -28,6 +29,7 @@ const MY_REPORTS_KEY = 'campusfind_my_reports_v1';
 const MESSAGES_KEY = 'campusfind_messages_v1';
 
 export const ReportProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAdmin, requireAdmin } = useAuth();
   const [reports, setReports] = useState<Report[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -121,12 +123,16 @@ export const ReportProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const updateReportStatus = (id: string, status: ReportStatus) => {
+    // Authorization check: only admins can update report status
+    requireAdmin();
     setReports(prev =>
       prev.map(r => (r.id === id ? { ...r, status } : r))
     );
   };
 
   const deleteReport = (id: string) => {
+    // Authorization check: only admins can delete reports
+    requireAdmin();
     setReports(prev => prev.filter(r => r.id !== id));
     setMyReportIds(prev => prev.filter(item => item !== id));
   };
@@ -189,6 +195,8 @@ export const ReportProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [reports]);
 
   const resetToDefault = () => {
+    // Authorization check: only admins can reset database
+    requireAdmin();
     setReports(INITIAL_REPORTS);
     setMyReportIds(["LF-2026-00101", "LF-2026-00105"]);
     localStorage.removeItem(STORAGE_KEY);
