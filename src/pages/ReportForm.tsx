@@ -221,13 +221,15 @@ export const ReportForm: React.FC = () => {
         <form onSubmit={handleSubmit} className="bg-white/50 backdrop-blur-lg border border-white/40 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
           {/* Item Type Switcher */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+            <label htmlFor="report-type-lost" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
               Report Type <span className="text-orange-500">*</span>
             </label>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 id="toggle-type-lost"
+                aria-label="Choose lost item report"
+                aria-pressed={itemType === 'lost'}
                 onClick={() => setItemType('lost')}
                 className={`py-3 px-4 rounded-2xl border text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
                   itemType === 'lost'
@@ -241,6 +243,8 @@ export const ReportForm: React.FC = () => {
               <button
                 type="button"
                 id="toggle-type-found"
+                aria-label="Choose found item report"
+                aria-pressed={itemType === 'found'}
                 onClick={() => setItemType('found')}
                 className={`py-3 px-4 rounded-2xl border text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
                   itemType === 'found'
@@ -257,7 +261,7 @@ export const ReportForm: React.FC = () => {
           {/* Title & Reporter Name */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label htmlFor="report-title-input" className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Item Title <span className="text-orange-500">*</span>
               </label>
               <input
@@ -274,7 +278,7 @@ export const ReportForm: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label htmlFor="report-reporter-input" className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Reporter Display Name <span className="text-orange-500">*</span>
               </label>
               <input
@@ -294,7 +298,7 @@ export const ReportForm: React.FC = () => {
           {/* Category & Location */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label htmlFor="report-category-select" className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Category <span className="text-orange-500">*</span>
               </label>
               <select
@@ -312,7 +316,7 @@ export const ReportForm: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label htmlFor="report-location-select" className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Campus Location <span className="text-orange-500">*</span>
               </label>
               <select
@@ -333,7 +337,7 @@ export const ReportForm: React.FC = () => {
           {/* Date & Time */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label htmlFor="report-date-input" className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Date {itemType === 'lost' ? 'Lost' : 'Found'} <span className="text-orange-500">*</span>
               </label>
               <input
@@ -346,7 +350,7 @@ export const ReportForm: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label htmlFor="report-time-input" className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Approximate Time (Optional)
               </label>
               <input
@@ -362,7 +366,7 @@ export const ReportForm: React.FC = () => {
           {/* Color & Brand */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label htmlFor="report-color-input" className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Color (Optional)
               </label>
               <input
@@ -376,7 +380,7 @@ export const ReportForm: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label htmlFor="report-brand-input" className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Brand / Manufacturer (Optional)
               </label>
               <input
@@ -392,7 +396,7 @@ export const ReportForm: React.FC = () => {
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+            <label htmlFor="report-description-input" className="block text-xs font-semibold text-slate-700 mb-1.5">
               Item Description & Distinguishing Marks <span className="text-orange-500">*</span>
             </label>
             <textarea
@@ -410,7 +414,7 @@ export const ReportForm: React.FC = () => {
 
           {/* Image URL & Sample Picker */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+            <label htmlFor="report-image-input" className="block text-xs font-semibold text-slate-700 mb-1.5">
               Image URL (Optional)
             </label>
             <div className="flex items-center gap-2">
