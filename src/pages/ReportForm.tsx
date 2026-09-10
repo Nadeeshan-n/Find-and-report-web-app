@@ -17,13 +17,14 @@ import { useReports } from '../context/ReportContext';
 import { LOCATIONS, CATEGORIES, findMatchesForReport } from '../mockData';
 import { ItemCategory, ItemType, Report, Match } from '../types';
 import { MatchCard } from '../components/MatchCard';
+import { isItemType, normalizeItemType } from '../utils/reportType';
 
 export const ReportForm: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { reports, addReport } = useReports();
 
-  const initialType = (searchParams.get('type') as ItemType) || 'lost';
+  const initialType = normalizeItemType(searchParams.get('type'), 'lost');
 
   const [itemType, setItemType] = useState<ItemType>(initialType);
   const [title, setTitle] = useState('');
@@ -46,10 +47,8 @@ export const ReportForm: React.FC = () => {
   const [instantMatches, setInstantMatches] = useState<Match[]>([]);
 
   useEffect(() => {
-    const typeFromUrl = searchParams.get('type') as ItemType;
-    if (typeFromUrl === 'lost' || typeFromUrl === 'found') {
-      setItemType(typeFromUrl);
-    }
+    const typeFromUrl = normalizeItemType(searchParams.get('type'), 'lost');
+    setItemType(typeFromUrl);
   }, [searchParams]);
 
   const validate = () => {
@@ -69,10 +68,12 @@ export const ReportForm: React.FC = () => {
     e.preventDefault();
     if (!validate()) return;
 
+    const safeItemType: ItemType = isItemType(itemType) ? itemType : 'lost';
+
     setIsSubmitting(true);
 
     const newReport = addReport({
-      type: itemType,
+      type: safeItemType,
       title: title.trim(),
       category,
       description: description.trim(),
